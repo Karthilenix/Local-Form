@@ -11,7 +11,9 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'https://local-form.onrender.com', // Your frontend's URL on Render
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://local-form.onrender.com', 'https://your-frontend-url.onrender.com']
+        : 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow the necessary HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'] // Allow appropriate headers
 }));
