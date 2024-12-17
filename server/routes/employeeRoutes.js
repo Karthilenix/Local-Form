@@ -1,9 +1,9 @@
 const express = require('express');
-const router = express.Router();  // Router instance to define API routes
-const db = require('../models/db');  // Import the database connection
+const router = express.Router();
+const db = require('../models/db');
 
 // Route to add a new employee
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const {
         firstName,
         lastName,
@@ -20,20 +20,47 @@ router.post('/', (req, res) => {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Insert the employee into the database
-    const sql = `INSERT INTO employees (firstName, lastName, employeeId, email, phone, department, dateOfJoining, role)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-    
-    db.query(sql, [firstName, lastName, employeeId, email, phone, department, dateOfJoining, role], (err, result) => {
-        if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ message: 'Employee ID or Email already exists' });
+    try {
+        // First check if employee ID exists
+        const checkSql = 'SELECT employeeId FROM employees WHERE employeeId = ?';
+        db.query(checkSql, [employeeId], (checkErr, checkResult) => {
+            if (checkErr) {
+                console.error('Database check error:', checkErr);
+                return res.status(500).json({ message: 'Database error', error: checkErr.message });
             }
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
 
-        res.status(201).json({ message: 'Employee added successfully', data: result });
-    });
+            if (checkResult && checkResult.length > 0) {
+                return res.status(400).json({ message: 'Employee ID already exists' });
+            }
+
+            // If employee ID doesn't exist, proceed with insertion
+            const insertSql = `INSERT INTO employees (firstName, lastName, employeeId, email, phone, department, dateOfJoining, role)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+            
+            db.query(insertSql, [firstName, lastName, employeeId, email, phone, department, dateOfJoining, role], (insertErr, result) => {
+                if (insertErr) {
+                    console.error('Database insert error:', insertErr);
+                    if (insertErr.code === 'ER_DUP_ENTRY') {
+                        return res.status(400).json({ message: 'Email address already exists' });
+                    }
+                    return res.status(500).json({ message: 'Database error', error: insertErr.message });
+                }
+
+                res.status(201).json({ 
+                    message: 'Employee added successfully', 
+                    data: { 
+                        id: result.insertId,
+                        employeeId,
+                        firstName,
+                        lastName
+                    } 
+                });
+            });
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
 });
 
 // Route to get all employees
@@ -42,6 +69,7 @@ router.get('/', (req, res) => {
     
     db.query(sql, (err, results) => {
         if (err) {
+            console.error('Database query error:', err);
             return res.status(500).json({ message: 'Database error', error: err.message });
         }
 
@@ -56,6 +84,7 @@ router.get('/:employeeId', (req, res) => {
 
     db.query(sql, [employeeId], (err, result) => {
         if (err) {
+            console.error('Database query error:', err);
             return res.status(500).json({ message: 'Database error', error: err.message });
         }
 
