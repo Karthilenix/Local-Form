@@ -10,7 +10,11 @@ dotenv.config(); // Load environment variables
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'https://local-form.onrender.com', // Your frontend's URL on Render
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow the necessary HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'] // Allow appropriate headers
+}));
 app.use(bodyParser.json());
 
 // Add a simple route to confirm server is running
