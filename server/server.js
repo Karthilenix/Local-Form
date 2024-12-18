@@ -9,9 +9,12 @@ dotenv.config();
 
 const app = express();
 
+// Determine which environment we're in
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Middleware
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
+    origin: isProduction 
         ? ['https://local-form.onrender.com']
         : 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
@@ -25,48 +28,46 @@ app.get('/', (req, res) => {
 });
 
 // Debug route to check database connection
-app.get('/api/debug/db', (req, res) => {
+app.get('/api/debug/db', async (req, res) => {
     const dbConfig = {
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        database: process.env.DB_NAME
+        host: isProduction ? process.env.RAILWAY_DB_HOST : process.env.LOCAL_DB_HOST,
+        user: isProduction ? process.env.RAILWAY_DB_USER : process.env.LOCAL_DB_USER,
+        password: isProduction ? process.env.RAILWAY_DB_PASSWORD : process.env.LOCAL_DB_PASSWORD,
+        database: isProduction ? process.env.RAILWAY_DB_NAME : process.env.LOCAL_DB_NAME,
+        port: isProduction ? process.env.RAILWAY_DB_PORT : process.env.LOCAL_DB_PORT
     };
     
-    res.json({
-        message: 'Database configuration (without password)',
-        config: dbConfig,
-        environment: process.env.NODE_ENV || 'development'
-    });
+    try {
+        const connection = await mysql.createConnection(dbConfig).promise();
+        await connection.query('SELECT 1');
+        await connection.end();
+        res.json({ 
+            status: 'success',
+            message: 'Database connection successful',
+            config: {
+                host: dbConfig.host,
+                user: dbConfig.user,
+                database: dbConfig.database,
+                port: dbConfig.port
+            }
+        });
+    } catch (error) {
+        console.error('Database connection error:', error);
+        res.status(500).json({ 
+            status: 'error',
+            message: 'Database connection failed',
+            error: error.message
+        });
+    }
 });
 
 // Your employee-related route
 app.use('/api/employees', employeeRoutes);
 
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
-
-// Test database connection
-db.connect(err => {
-    if (err) {
-        console.error("Database Connection Error:", err);
-        console.error("Database Config:", {
-            host: process.env.DB_HOST,
-            user: process.env.DB_USER,
-            database: process.env.DB_NAME
-        });
-        return;
-    }
-    console.log("Connected to the MySQL database.");
-});
-
-// Start the server
 const PORT = process.env.PORT || 6001;
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('Environment:', process.env.NODE_ENV || 'development');
-    console.log('Database Host:', process.env.DB_HOST);
+    console.log('Environment:', isProduction ? 'Production' : 'Development');
+    console.log('Database Host:', isProduction ? process.env.RAILWAY_DB_HOST : process.env.LOCAL_DB_HOST);
 });

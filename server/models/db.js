@@ -1,22 +1,29 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
-// Create the connection pool to handle multiple connections
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+// Determine which environment we're in
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Select the appropriate database configuration
+const dbConfig = {
+    host: isProduction ? process.env.RAILWAY_DB_HOST : process.env.LOCAL_DB_HOST,
+    user: isProduction ? process.env.RAILWAY_DB_USER : process.env.LOCAL_DB_USER,
+    password: isProduction ? process.env.RAILWAY_DB_PASSWORD : process.env.LOCAL_DB_PASSWORD,
+    database: isProduction ? process.env.RAILWAY_DB_NAME : process.env.LOCAL_DB_NAME,
+    port: isProduction ? process.env.RAILWAY_DB_PORT : process.env.LOCAL_DB_PORT,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-}).promise(); // Use promise wrapper for async/await support
+};
+
+// Create the connection pool
+const pool = mysql.createPool(dbConfig).promise();
 
 // Test the connection
 async function testConnection() {
     try {
         const connection = await pool.getConnection();
-        console.log('Database connected successfully');
+        console.log('Database connected successfully to:', dbConfig.host);
         connection.release();
     } catch (error) {
         console.error('Error connecting to the database:', error);
