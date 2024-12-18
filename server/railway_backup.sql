@@ -36,7 +36,7 @@ CREATE TABLE `employees` (
   `role` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `employeeId` (`employeeId`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,7 @@ CREATE TABLE `employees` (
 
 LOCK TABLES `employees` WRITE;
 /*!40000 ALTER TABLE `employees` DISABLE KEYS */;
-INSERT INTO `employees` VALUES (1,'Karthikeyan','Venkatesan','22IT046','karthikeyanv.it2022@citchennai.net','1234567890','Manager','2024-12-03','Developer'),(2,'Akshay','Kumar','22IT006','Axy@gmai.com','1234567890','Manager','2024-12-03','Developer'),(20,'Illakiya','Aarthi','22IT045','illakiya@gmail.com','1234567890','Manager','2024-12-03','Developer'),(23,'Illakiya','Aarthi','22IT047','illakiya@gmail.com','1234567890','Manager','2024-12-03','Developer'),(24,'Karan','Kumar','22IT04','kiran.it2022@citchennai.net','1234567890','Manager','2024-12-11','Developer'),(25,'Karthui','Kumar','22IT049','karthi.it2022@citchennai.net','1234567890','Developer','2024-12-12','Developer');
+INSERT INTO `employees` VALUES (1,'Karthikeyan','Venkatesan','22IT046','karthikeyanv.it2022@citchennai.net','1234567890','Manager','2024-12-03','Developer'),(2,'Akshay','Kumar','22IT006','Axy@gmai.com','1234567890','Manager','2024-12-03','Developer'),(20,'Illakiya','Aarthi','22IT045','illakiya@gmail.com','1234567890','Manager','2024-12-03','Developer'),(23,'Illakiya','Aarthi','22IT047','illakiya@gmail.com','1234567890','Manager','2024-12-03','Developer'),(24,'Karan','Kumar','22IT04','kiran.it2022@citchennai.net','1234567890','Manager','2024-12-11','Developer'),(25,'Karthui','Kumar','22IT049','karthi.it2022@citchennai.net','1234567890','Developer','2024-12-12','Developer'),(26,'Kaviyan','Kumar','33IT002','kaviyan.it2022@citchennai.net','1234567890','Manager','2024-12-03','Developer');
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -58,4 +58,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-18 10:16:25
+-- Dump completed on 2024-12-18 11:57:53
