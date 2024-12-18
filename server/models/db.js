@@ -1,32 +1,30 @@
 const mysql = require('mysql2');
 require('dotenv').config();
 
-const db = mysql.createConnection({
+// Create the connection pool to handle multiple connections
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+}).promise(); // Use promise wrapper for async/await support
 
-db.connect((err) => {
-    if (err) {
-        console.error('Database connection error:', err.message);
-        throw err;
-    } else {
-        console.log('Connected to MySQL Database');
+// Test the connection
+async function testConnection() {
+    try {
+        const connection = await pool.getConnection();
+        console.log('Database connected successfully');
+        connection.release();
+    } catch (error) {
+        console.error('Error connecting to the database:', error);
+        throw error;
     }
-});
+}
 
-// Handle connection errors after initial connection
-db.on('error', (err) => {
-    console.error('Database error:', err);
-    if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-        console.error('Database connection was closed.');
-    } else if (err.code === 'ER_CON_COUNT_ERROR') {
-        console.error('Database has too many connections.');
-    } else if (err.code === 'ECONNREFUSED') {
-        console.error('Database connection was refused.');
-    }
-});
+// Initial connection test
+testConnection().catch(console.error);
 
-module.exports = db;
+module.exports = pool;

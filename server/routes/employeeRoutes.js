@@ -22,78 +22,65 @@ router.post('/', async (req, res) => {
 
     try {
         // First check if employee ID exists
-        const checkSql = 'SELECT employeeId FROM employees WHERE employeeId = ?';
-        db.query(checkSql, [employeeId], (checkErr, checkResult) => {
-            if (checkErr) {
-                console.error('Database check error:', checkErr);
-                return res.status(500).json({ message: 'Database error', error: checkErr.message });
-            }
+        const checkResult = await db.query(
+            'SELECT employeeid FROM employees WHERE employeeid = $1',
+            [employeeId]
+        );
 
-            if (checkResult && checkResult.length > 0) {
-                return res.status(400).json({ message: 'Employee ID already exists' });
-            }
+        if (checkResult.rows.length > 0) {
+            return res.status(400).json({ message: 'Employee ID already exists' });
+        }
 
-            // If employee ID doesn't exist, proceed with insertion
-            const insertSql = `INSERT INTO employees (firstName, lastName, employeeId, email, phone, department, dateOfJoining, role)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            
-            db.query(insertSql, [firstName, lastName, employeeId, email, phone, department, dateOfJoining, role], (insertErr, result) => {
-                if (insertErr) {
-                    console.error('Database insert error:', insertErr);
-                    if (insertErr.code === 'ER_DUP_ENTRY') {
-                        return res.status(400).json({ message: 'Email address already exists' });
-                    }
-                    return res.status(500).json({ message: 'Database error', error: insertErr.message });
-                }
+        // If employee ID doesn't exist, proceed with insertion
+        const result = await db.query(
+            `INSERT INTO employees (firstname, lastname, employeeid, email, phone, department, dateofjoining, role)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [firstName, lastName, employeeId, email, phone, department, dateOfJoining, role]
+        );
 
-                res.status(201).json({ 
-                    message: 'Employee added successfully', 
-                    data: { 
-                        id: result.insertId,
-                        employeeId,
-                        firstName,
-                        lastName
-                    } 
-                });
-            });
+        res.status(201).json({
+            message: 'Employee added successfully',
+            data: result.rows[0]
         });
     } catch (error) {
-        console.error('Server error:', error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        console.error('Database error:', error);
+        res.status(500).json({ 
+            message: 'Database error', 
+            error: error.message 
+        });
     }
 });
 
 // Route to get all employees
-router.get('/', (req, res) => {
-    const sql = 'SELECT * FROM employees';
-    
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Database query error:', err);
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-
-        res.status(200).json({ employees: results });
-    });
+router.get('/', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM employees ORDER BY employeeid');
+        res.status(200).json({ employees: result.rows });
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ 
+            message: 'Database error', 
+            error: error.message 
+        });
+    }
 });
 
 // Route to get an employee by employeeId
-router.get('/:employeeId', (req, res) => {
+router.get('/:employeeId', async (req, res) => {
     const { employeeId } = req.params;
-    const sql = 'SELECT * FROM employees WHERE employeeId = ?';
-
-    db.query(sql, [employeeId], (err, result) => {
-        if (err) {
-            console.error('Database query error:', err);
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-
-        if (result.length === 0) {
+    try {
+        const result = await db.query('SELECT * FROM employees WHERE employeeid = $1', [employeeId]);
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Employee not found' });
         }
-
-        res.status(200).json({ employee: result[0] });
-    });
+        res.status(200).json({ employee: result.rows[0] });
+    } catch (error) {
+        console.error('Database error:', error);
+        res.status(500).json({ 
+            message: 'Database error', 
+            error: error.message 
+        });
+    }
 });
 
 module.exports = router;
